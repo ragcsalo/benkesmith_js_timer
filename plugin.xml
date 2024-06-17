@@ -8,9 +8,23 @@
         <clobbers target="benkesmith.plugins.timer" />
     </js-module>
     <platform name="android">
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.WAKE_LOCK" />
+        </config-file>
+
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="Timer">
+                <param name="android-package" value="com.benkesmith.js_timer.Timer" />
+            </feature>
+        </config-file>
         <source-file src="src/android/Timer.java" target-dir="src/com/benkesmith/js_timer" />
     </platform>
     <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="Timer">
+                <param name="ios-package" value="Timer" />
+            </feature>
+        </config-file>
         <source-file src="src/ios/Timer.m" />
         <header-file src="src/ios/Timer.h" />
     </platform>
