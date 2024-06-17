@@ -1,0 +1,29 @@
+{
+  "name": "benkesmith_js_timer",
+  "version": "1.0.0",
+  "description": "A Cordova plugin to fire a JavaScript function periodically from the native side.",
+  "cordova": {
+    "id": "com.benkesmith.js_timer",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ragcsalo/benkesmith_js_timer.git"
+  },
+  "keywords": [
+    "cordova",
+    "timer",
+    "plugin"
+  ],
+  "author": "Benke Smith <benke.smith@gmail.com>",
+  "license": "Apache-2.0",
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=6.0.0"
+    }
+  ]
+}

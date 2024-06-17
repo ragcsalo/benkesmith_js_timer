@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin id="com.benkesmith.js_timer" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0">
+    <name>JSTimer</name>
+    <description>Cordova Plugin JS Timer</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova, timer, plugin</keywords>
+    <js-module src="www/timer.js" name="Timer">
+        <clobbers target="benkesmith.plugins.timer" />
+    </js-module>
+    <platform name="android">
+        <source-file src="src/android/Timer.java" target-dir="src/com/benkesmith/js_timer" />
+    </platform>
+    <platform name="ios">
+        <source-file src="src/ios/Timer.m" />
+        <header-file src="src/ios/Timer.h" />
+    </platform>
+</plugin>
