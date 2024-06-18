@@ -1,20 +1,25 @@
-**What's this plugin for?**
+## What's this plugin for?
 
-I've created this plugin to keep the Javascript code "awake" when the Cordova app runs in the background. As soon as the app goes to the background, Javascript timers stop working, unless there is an incoming signal from an external device, or from the native code. So this plugin sends a "tick" to the Javascript code at a regular time interval, which wakes the timers up.
+I've created this plugin (using ChatGPT-4o) to keep the Javascript code "awake" when the Cordova app runs in the background.
 
+I've had this issue for many years: basically as soon as the app goes to the background, Javascript timers stop working... Lately I've discovered that if there's an incoming signal from an external BLE device, or from the native code, the Javascript timers wake up for a few seconds.
 
+So this plugin sends a "tick" to the Javascript code at a regular time interval (like 1 second), which wakes the timers up temporarily.
+<br><br>
 
-**Installing the plugin**
+## Multi-platform support
+The plugin was tested and should work fine on iOS 18 Beta and Android 14.
+You can report platform incompatibilities in the Issues section.
+<br><br>
 
-(supports both Android and iOS)
+## Installing the plugin
 
 ```cordova plugin add https://github.com/ragcsalo/benkesmith_js_timer```
+<br><br>
 
+## Usage Example in JavaScript
 
-
-**Usage Example in JavaScript**
-
-Here's how you can use the plugin with the interval and max_runtime parameters from the JavaScript side:
+Here's how you can use the plugin with the `interval` and `maxRuntime` parameters from the JavaScript side:
 
 ```javascript
 document.addEventListener('deviceready', function () {
