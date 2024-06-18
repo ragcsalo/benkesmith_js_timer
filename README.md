@@ -14,7 +14,12 @@ You can report platform incompatibilities in the Issues section.
 
 ## Installing the plugin
 
-```cordova plugin add https://github.com/ragcsalo/benkesmith_js_timer```
+`cordova plugin add https://github.com/ragcsalo/benkesmith_js_timer`
+<br><br>
+
+## Deleting the plugin
+
+`cordova plugin remove com.benkesmith.js_timer`
 <br><br>
 
 ## Usage Example in JavaScript
@@ -29,9 +34,9 @@ document.addEventListener('deviceready', function () {
         // Your periodic task code here
     };
 
-    // Start the native timer with a custom interval (e.g., every 2 seconds) and max runtime (e.g., 5 minutes)
-    var interval = 2.0; // interval in seconds
-    var maxRuntime = 5; // max runtime in minutes, 0 means never stop
+    // Start the native timer with a custom interval (e.g., every 1 seconds) and max runtime (e.g., 15 minutes)
+    var interval = 1.0; // interval in seconds
+    var maxRuntime = 15; // max runtime in minutes, 0 means never stop
     benkesmith.plugins.timer.start(interval, maxRuntime, function() {
         console.log('Timer started with interval: ' + interval + ' seconds and max runtime: ' + maxRuntime + ' minutes');
     }, function(error) {
