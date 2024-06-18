@@ -1,8 +1,8 @@
 var exec = require('cordova/exec');
 
 var Timer = {
-    start: function(successCallback, errorCallback) {
-        exec(successCallback, errorCallback, 'Timer', 'start', []);
+    start: function(interval, maxRuntime, successCallback, errorCallback) {
+        exec(successCallback, errorCallback, 'Timer', 'start', [interval, maxRuntime]);
     },
     stop: function(successCallback, errorCallback) {
         exec(successCallback, errorCallback, 'Timer', 'stop', []);
@@ -10,3 +10,4 @@ var Timer = {
 };
 
 module.exports = Timer;
+
