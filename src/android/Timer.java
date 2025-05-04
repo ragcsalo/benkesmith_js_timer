@@ -1,81 +1,120 @@
 package com.benkesmith.js_timer;
 
+import android.app.Activity;
+import android.app.Application;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import android.os.Handler;
-import android.util.Log;
-
 public class Timer extends CordovaPlugin {
-    private Handler handler = new Handler();
-    private Runnable tickerRunnable;
-    private Runnable stopRunnable;
+    private Handler       handler      = new Handler();
+    private Runnable      tickerRunnable, stopRunnable;
+    private double        mInterval    = 1.0;   // seconds
+    private double        mMaxRuntime  = 0.0;   // seconds (0 = no limit)
+    private boolean       isRunning    = false;
+    private Application   application;
 
     @Override
-    public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
-        if (action.equals("start")) {
-            double interval = args.optDouble(0, 1.0); // Default to 1.0 second if not provided
-            double maxRuntime = args.optDouble(1, 0) * 60; // Convert minutes to seconds, 0 means no limit
-            start(interval, maxRuntime, callbackContext);
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
+        // grab the Application so we can watch its lifecycle
+        this.application = cordova.getActivity().getApplication();
+        this.application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            @Override public void onActivityPaused(Activity activity) {
+                if (activity == cordova.getActivity()) {
+                    Log.d("Timer", "Activity paused ⇒ auto-start");
+                    startTimerInternal();
+                }
+            }
+            @Override public void onActivityResumed(Activity activity) {
+                if (activity == cordova.getActivity()) {
+                    Log.d("Timer", "Activity resumed ⇒ auto-stop");
+                    stopTimerInternal();
+                }
+            }
+            // unused:
+            @Override public void onActivityCreated(Activity a, Bundle b) {}
+            @Override public void onActivityStarted(Activity a) {}
+            @Override public void onActivityStopped(Activity a) {}
+            @Override public void onActivitySaveInstanceState(Activity a, Bundle b) {}
+            @Override public void onActivityDestroyed(Activity a) {}
+        });
+    }
+
+    @Override
+    public boolean execute(String action, JSONArray args, CallbackContext cb) throws JSONException {
+        if ("start".equals(action)) {
+            mInterval   = args.optDouble(0, 1.0);
+            mMaxRuntime = args.optDouble(1, 0.0) * 60.0;
+            startTimerInternal();
+            cb.sendPluginResult(new PluginResult(PluginResult.Status.OK));
             return true;
-        } else if (action.equals("stop")) {
-            stop(callbackContext);
+        }
+        if ("stop".equals(action)) {
+            stopTimerInternal();
+            cb.sendPluginResult(new PluginResult(PluginResult.Status.OK));
             return true;
         }
         return false;
     }
 
-    private void start(final double interval, final double maxRuntime, final CallbackContext callbackContext) {
-        stopRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (tickerRunnable != null) {
-                    handler.removeCallbacks(tickerRunnable);
-                    tickerRunnable = null;
-                }
-                callbackContext.success();
-                Log.d("Timer", "Max runtime reached, timer stopped.");
-            }
-        };
+    private void startTimerInternal() {
+        if (isRunning) {
+            Log.d("Timer", "Already running, skip start");
+            return;
+        }
+        isRunning = true;
+        Log.d("Timer", "Starting: interval=" + mInterval + "s, maxRuntime=" + mMaxRuntime + "s");
 
-        tickerRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (cordova.getActivity().isFinishing()) return;
-                cordova.getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String js = "benkesmith.plugins.timer.onTick();";
-                        webView.getEngine().evaluateJavascript(js, null);
-                    }
-                });
-                handler.postDelayed(this, (long) (interval * 1000));
-            }
+        // Tick runnable
+        tickerRunnable = () -> {
+            cordova.getActivity().runOnUiThread(() ->
+                    webView.getEngine().evaluateJavascript(
+                            "benkesmith.plugins.timer.onTick();", null
+                    )
+            );
+            // schedule next tick
+            handler.postDelayed(tickerRunnable, (long)(mInterval * 1000));
         };
-
         handler.post(tickerRunnable);
 
-        if (maxRuntime > 0) {
-            handler.postDelayed(stopRunnable, (long) (maxRuntime * 1000));
+        // Max-runtime stopper
+        if (mMaxRuntime > 0) {
+            stopRunnable = () -> {
+                Log.d("Timer", "Max runtime reached ⇒ stopping");
+                stopTimerInternal();
+            };
+            handler.postDelayed(stopRunnable, (long)(mMaxRuntime * 1000));
         }
-
-        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
-        Log.d("Timer", "Timer started with interval: " + interval + " seconds and max runtime: " + maxRuntime + " seconds.");
     }
 
-    private void stop(CallbackContext callbackContext) {
-        if (tickerRunnable != null) {
-            handler.removeCallbacks(tickerRunnable);
-            tickerRunnable = null;
+    private void stopTimerInternal() {
+        if (!isRunning) {
+            Log.d("Timer", "Not running, skip stop");
+            return;
         }
-        if (stopRunnable != null) {
-            handler.removeCallbacks(stopRunnable);
-            stopRunnable = null;
+        isRunning = false;
+        Log.d("Timer", "Stopping");
+        handler.removeCallbacks(tickerRunnable);
+        handler.removeCallbacks(stopRunnable);
+        tickerRunnable = stopRunnable = null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // clean up
+        stopTimerInternal();
+        if (application != null) {
+            application.unregisterActivityLifecycleCallbacks((Application.ActivityLifecycleCallbacks)this);
         }
-        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
-        Log.d("Timer", "Timer stopped.");
     }
 }
