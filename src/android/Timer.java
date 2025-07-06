@@ -21,13 +21,15 @@ public class Timer extends CordovaPlugin {
     private double        mMaxRuntime  = 0.0;   // seconds (0 = no limit)
     private boolean       isRunning    = false;
     private Application   application;
+    private Application.ActivityLifecycleCallbacks lifecycleCallbacks;
 
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
         // grab the Application so we can watch its lifecycle
-        this.application = cordova.getActivity().getApplication();
-        this.application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+        application = cordova.getActivity().getApplication();
+        // keep a reference so we can unregister
+        lifecycleCallbacks = new Application.ActivityLifecycleCallbacks() {
             @Override public void onActivityPaused(Activity activity) {
                 if (activity == cordova.getActivity()) {
                     Log.d("Timer", "Activity paused ⇒ auto-start");
@@ -46,7 +48,7 @@ public class Timer extends CordovaPlugin {
             @Override public void onActivityStopped(Activity a) {}
             @Override public void onActivitySaveInstanceState(Activity a, Bundle b) {}
             @Override public void onActivityDestroyed(Activity a) {}
-        });
+        };
     }
 
     @Override
@@ -113,8 +115,8 @@ public class Timer extends CordovaPlugin {
         super.onDestroy();
         // clean up
         stopTimerInternal();
-        if (application != null) {
-            application.unregisterActivityLifecycleCallbacks((Application.ActivityLifecycleCallbacks)this);
+        if (application != null && lifecycleCallbacks != null) {
+            application.unregisterActivityLifecycleCallbacks(lifecycleCallbacks);
         }
     }
 }
